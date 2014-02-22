@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#define MAX_RX_SIZE	64
+
 void flushTx();
 
 extern void packetReceived(uint8_t cmd, uint8_t *data, int length);

@@ -361,8 +361,8 @@ PE_DEBUGHALT();
       <group name="Settings">
         <Clock_gate v="Enabled" />
         <group name="Clock settings">
-          <Baud_rate_divisor v="10" />
-          <Baud_rate v="119156.364 baud" />
+          <Baud_rate_divisor v="22" />
+          <Baud_rate v="56987.826 baud" />
         </group>
         <group name="Transfer settings">
           <Data_format v="8bit" />
@@ -451,15 +451,15 @@ PE_DEBUGHALT();
       <Component_name v="SPI0" />
       <Device v="SPI0" />
       <group name="Settings">
-        <Clock_gate v="Do not initialize" />
+        <Clock_gate v="Enabled" />
         <group name="Clock setting">
           <Baud_rate_prescaler v="divide by 1" />
           <Baud_rate_divisor v="divide by 4" />
           <SCK_frequency v="5.243 MHz" />
         </group>
-        <Mode_Select v="Slave" />
+        <Mode_Select v="Master" />
         <Clock_polarity v="Active-high" />
-        <Clock_phase v="Second edge" />
+        <Clock_phase v="First edge" />
         <Data_shift_order v="MSB first" />
         <Bidirectional_mode v="Disabled" />
         <Output_enable_in_bidirect__mode v="no" />
@@ -494,7 +494,7 @@ PE_DEBUGHALT();
         </group>
       </group>
       <group name="Initialization">
-        <Module_enable v="no" />
+        <Module_enable v="yes" />
         <Call_Init_method v="yes" />
       </group>
     </Properties>

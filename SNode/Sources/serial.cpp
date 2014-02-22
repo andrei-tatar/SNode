@@ -15,7 +15,7 @@ static volatile uint16_t txReadPos = 0;
 static uint16_t txWritePos = 0;
 static volatile uint16_t txCount = 0;
 
-static uint8_t rxBuffer[BUF_SIZE];
+static uint8_t rxBuffer[MAX_RX_SIZE];
 
 static inline int min(int a, int b)
 {
@@ -64,6 +64,7 @@ PE_ISR(uartInterrupt)
 				state = STATE_LENGTH_LSB;
 				checksum = 0;
 				headerOffset = 0;
+				return;
 			}
 		}
 		else
@@ -82,7 +83,7 @@ PE_ISR(uartInterrupt)
 
 			case STATE_LENGTH_MSB:
 				length |= cByte << 8;
-				if (length > BUF_SIZE)
+				if (length > MAX_RX_SIZE)
 				{
 					state = STATE_IDLE;
 					headerOffset = 0;
@@ -143,7 +144,9 @@ void flushTx()
 
 void serialSendPacket(uint8_t cmd, const uint8_t *data, int length)
 {
-	int totalLength = sizeof(packetStart) + 3 + length;
+	length += 1;
+	
+	int totalLength = sizeof(packetStart) + 2 + length + 1;
 	int offset = sizeof(packetStart);
 	uint8_t aux[totalLength];
 	
@@ -151,13 +154,14 @@ void serialSendPacket(uint8_t cmd, const uint8_t *data, int length)
 	aux[offset++] = length & 0xFF;
 	aux[offset++] = (length >> 8) & 0xFF;
 	aux[offset++] = cmd;
-	memcpy(&aux[offset], data, length);
+	memcpy(&aux[offset], data, length - 1);
+	offset += length - 1;
 	
 	uint8_t checksum = 0;
-	for (int i = sizeof(packetStart); i < offset + length; i++)
+	for (int i = sizeof(packetStart); i < offset; i++)
 		checksum ^= aux[i];
 	
-	aux[offset + length] = checksum;
+	aux[offset] = checksum;
 	
 	serialData(aux, totalLength);
 }
