@@ -137,6 +137,12 @@ static void serialData(const uint8_t *buffer, int length)
 		UART1_C2 |= UART_C2_TIE_MASK;
 	}
 }
+
+void debugString(const char *str)
+{
+	serialData((const uint8_t*)str, strlen(str));
+}
+
 void flushTx()
 {
 	while (txCount) ;

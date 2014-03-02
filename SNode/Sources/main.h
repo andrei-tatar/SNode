@@ -21,6 +21,32 @@ typedef struct
 #define QUEUE_SIZE 		8
 #define QUEUE_SIZE_MASK	(QUEUE_SIZE - 1)
 
+namespace NodeConfigType
+{
+	typedef enum NodeConfigurationType
+	{
+		RedirectPacketsToSerialPort 		= 0x80000000,
+		EnableSleepMode						= 0x40000000,
+	} NodeConfigurationType;
+}
+
+typedef struct
+{
+#define SETTINGS_MAGIC_NUMBER	0x48C6FAF0 
+	
+	uint32_t MagicNumber;
+	uint32_t HashCode;
+	uint8_t AesKey[16];
+	uint8_t AesIV[16];
+	
+	NodeConfigType::NodeConfigurationType NodeType;
+	
+	uint16_t Address;
+	uint8_t Channel;
+} UserSettings;
+
 void sNodeMain(void);
+
+extern bool FlashOperationComplete;
 
 #endif /* MAIN_H_ */

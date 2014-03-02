@@ -38,6 +38,7 @@
 #include "SPI0.h"
 #include "PTD.h"
 #include "SysTick.h"
+#include "FLASH.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,6 +59,25 @@ extern "C" {
 /* ===================================================================*/
 void Cpu_OnNMIINT(void);
 
+
+/*
+** ===================================================================
+**     Event       :  FLASH_OnOperationComplete (module Events)
+**
+**     Component   :  FLASH [FLASH_LDD]
+*/
+/*!
+**     @brief
+**         Called at the end of the whole write / erase operation. if
+**         the event is enabled. See SetEventMask() and GetEventMask()
+**         methods.
+**     @param
+**         UserDataPtr     - Pointer to the user or
+**                           RTOS specific data. This pointer is passed
+**                           as the parameter of Init method.
+*/
+/* ===================================================================*/
+void FLASH_OnOperationComplete(LDD_TUserData *UserDataPtr);
 
 /* END Events */
 
