@@ -35,6 +35,11 @@
 #include "PTD.h"
 #include "SysTick.h"
 #include "FLASH.h"
+#include "Inputs.h"
+#include "O0.h"
+#include "O1.h"
+#include "O2.h"
+#include "O3.h"
 /* Including shared modules, which are used for whole project */
 #include "PE_Types.h"
 #include "PE_Error.h"

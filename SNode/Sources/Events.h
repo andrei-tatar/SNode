@@ -39,6 +39,11 @@
 #include "PTD.h"
 #include "SysTick.h"
 #include "FLASH.h"
+#include "Inputs.h"
+#include "O0.h"
+#include "O1.h"
+#include "O2.h"
+#include "O3.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -78,6 +83,26 @@ void Cpu_OnNMIINT(void);
 */
 /* ===================================================================*/
 void FLASH_OnOperationComplete(LDD_TUserData *UserDataPtr);
+
+/*
+** ===================================================================
+**     Event       :  Inputs_OnPortEvent (module Events)
+**
+**     Component   :  Inputs [GPIO_LDD]
+*/
+/*!
+**     @brief
+**         Called if defined event on any pin of the port occured.
+**         OnPortEvent event and GPIO interrupt must be enabled. See
+**         SetEventMask() and GetEventMask() methods. This event is
+**         enabled if [Interrupt service/event] is Enabled and disabled
+**         if [Interrupt service/event] is Disabled.
+**     @param
+**         UserDataPtr     - Pointer to RTOS device
+**                           data structure pointer.
+*/
+/* ===================================================================*/
+void Inputs_OnPortEvent(LDD_TUserData *UserDataPtr);
 
 /* END Events */
 

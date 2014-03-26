@@ -78,6 +78,29 @@ void FLASH_OnOperationComplete(LDD_TUserData *UserDataPtr)
 	FlashOperationComplete = true;
 }
 
+/*
+** ===================================================================
+**     Event       :  Inputs_OnPortEvent (module Events)
+**
+**     Component   :  Inputs [GPIO_LDD]
+*/
+/*!
+**     @brief
+**         Called if defined event on any pin of the port occured.
+**         OnPortEvent event and GPIO interrupt must be enabled. See
+**         SetEventMask() and GetEventMask() methods. This event is
+**         enabled if [Interrupt service/event] is Enabled and disabled
+**         if [Interrupt service/event] is Disabled.
+**     @param
+**         UserDataPtr     - Pointer to RTOS device
+**                           data structure pointer.
+*/
+/* ===================================================================*/
+void Inputs_OnPortEvent(LDD_TUserData *UserDataPtr)
+{
+	InputPinsChanged = true;
+}
+
 /* END Events */
 
 #ifdef __cplusplus

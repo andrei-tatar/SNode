@@ -50,4 +50,10 @@
 /* Sent as a repy to CMD_PING_ECHO */
 #define NT_PING_ECHO		CMD_PING_ECHO
 
+
+#define SNODE_CMD_INPUTS	0x1D
+#define SNODE_CMD_OUTPUT	0x4A
+#define SNODE_CMD_ECHO		0xE0
+#define SNODE_CMD_ECHO_R	0xE1
+
 #endif /* COMMANDS_H_ */

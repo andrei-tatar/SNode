@@ -29,8 +29,8 @@
 #define CE_HIGH()	PTD_BASE_PTR->PSOR = CE_PIN
 #define CE_LOW()	PTD_BASE_PTR->PCOR = CE_PIN
 
-#define LED_ON(x)	PTD_BASE_PTR->PSOR = x
-#define LED_OFF(x)	PTD_BASE_PTR->PCOR = x
+#define LED_ON(x)	//PTD_BASE_PTR->PSOR = x
+#define LED_OFF(x)	//PTD_BASE_PTR->PCOR = x
 
 void delay_ms(uint16_t msec);
 void delay_us(uint32_t usec);

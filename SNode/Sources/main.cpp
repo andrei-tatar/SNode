@@ -1,7 +1,13 @@
 #include "hal.h"
 #include "main.h"
 #include "Commands.h"
+
 #include "FLASH.h"
+#include "Inputs.h"
+#include "O0.h"
+#include "O1.h"
+#include "O2.h"
+#include "O3.h"
 
 static ReceivedPacket queue[QUEUE_SIZE];
 static volatile uint8_t queueWritePos = 0; 
@@ -14,8 +20,9 @@ static RF24Network network = RF24Network(radio);
 static uint32_t led1OffTime = 0, led2OffTime = 0;
 
 bool FlashOperationComplete = false;
+volatile bool InputPinsChanged = false;
 
-void packetReceived(uint8_t cmd, uint8_t *data, int length)
+void packetReceived(uint8_t cmd, const uint8_t *data, int length)
 {
 	if (queueCount == QUEUE_SIZE)
 		return;
@@ -34,10 +41,11 @@ static void WaitFlashOperation()
 	FlashOperationComplete = false;
 }
 
-static void ProcessSerialPacket(ReceivedPacket &packet)
+static void ProcessSerialPacket(const ReceivedPacket &packet)
 {
 	bool ok;
 	RF24NetworkHeader header;
+	const uint8_t *constBuf;
 	uint8_t *buf;
 	static uint8_t data[10];
 	
@@ -57,27 +65,27 @@ static void ProcessSerialPacket(ReceivedPacket &packet)
 		
 	case CMD_SETTINGS:
 		settings.MagicNumber = SETTINGS_MAGIC_NUMBER;
-		buf = packet.Data;
+		constBuf = packet.Data;
 		
-		settings.HashCode  = *buf++ << (8 * 0);
-		settings.HashCode |= *buf++ << (8 * 1);
-		settings.HashCode |= *buf++ << (8 * 2);
-		settings.HashCode |= *buf++ << (8 * 3);
+		settings.HashCode  = *constBuf++ << (8 * 0);
+		settings.HashCode |= *constBuf++ << (8 * 1);
+		settings.HashCode |= *constBuf++ << (8 * 2);
+		settings.HashCode |= *constBuf++ << (8 * 3);
 		
-		memcpy(settings.AesKey, buf, 16); buf += 16;
-		memcpy(settings.AesIV, buf, 16); buf += 16;
+		memcpy(settings.AesKey, constBuf, 16); constBuf += 16;
+		memcpy(settings.AesIV, constBuf, 16); constBuf += 16;
 		
 		uint32_t nodeType;
-		nodeType  = *buf++ << (8 * 0);
-		nodeType |= *buf++ << (8 * 1);
-		nodeType |= *buf++ << (8 * 2);
-		nodeType |= *buf++ << (8 * 3);
+		nodeType  = *constBuf++ << (8 * 0);
+		nodeType |= *constBuf++ << (8 * 1);
+		nodeType |= *constBuf++ << (8 * 2);
+		nodeType |= *constBuf++ << (8 * 3);
 		settings.NodeType = (NodeConfigType::NodeConfigurationType)nodeType;
 		
-		settings.Address  = *buf++;
-		settings.Address |= *buf++ << 8;
+		settings.Address  = *constBuf++;
+		settings.Address |= *constBuf++ << 8;
 		
-		settings.Channel  = *buf++;
+		settings.Channel  = *constBuf++;
 		
 		uint16_t result;
 		if ((result = FLASH_Erase(FLASH_DeviceData, 
@@ -132,11 +140,26 @@ static void ProcessSerialPacket(ReceivedPacket &packet)
 	}
 }
 
-static void ProcessNetworkPacket(RF24NetworkHeader &header, uint8_t *data, uint8_t length)
+static void ProcessNetworkPacket(RF24NetworkHeader &header, const uint8_t *data, uint8_t length)
 {
+	bool ok;
+	uint8_t buffer[3];
+	
 	switch (*data++)
 	{
-	
+	case SNODE_CMD_OUTPUT:
+		O0_PutVal(NULL, *data & 0x01);
+		O1_PutVal(NULL, *data & 0x02);
+		O2_PutVal(NULL, *data & 0x04);
+		O3_PutVal(NULL, *data & 0x08);
+		break;
+	case SNODE_CMD_ECHO:
+		LED_ON(LED1);
+		header = RF24NetworkHeader(header.from_node);
+		buffer[0] = SNODE_CMD_ECHO_R;
+		ok = network.write(header, buffer, 1);
+		led1OffTime = getTime() + (ok ? 100 : 0);
+		break;
 	}
 }
 
@@ -185,6 +208,57 @@ static void ProcessSerialPackets()
 	} while (packetsReceived);
 }
 
+static void configureNodeFromSettings()
+{
+	if (settings.NodeType & NodeConfigType::CustomNodeType)
+		return;
+	
+	//enable outputs
+	if (!(settings.NodeType & NodeConfigType::EnableSleepMode))
+	{
+		O0_Init(NULL); O1_Init(NULL);
+		O2_Init(NULL); O3_Init(NULL);
+	}
+	
+	//enable inputs
+	if (settings.NodeType & NodeConfigType::InputEnableMask)
+	{
+		Inputs_Init(NULL);
+		uint32_t interruptsMask = 0;
+		
+		//enable event for enabled inputs
+		if (settings.NodeType & NodeConfigType::Input0Enable) interruptsMask |= Inputs_FIELD_0_PIN_0;
+		if (settings.NodeType & NodeConfigType::Input1Enable) interruptsMask |= Inputs_FIELD_0_PIN_1;
+		if (settings.NodeType & NodeConfigType::Input2Enable) interruptsMask |= Inputs_FIELD_0_PIN_2;
+		if (settings.NodeType & NodeConfigType::Input3Enable) interruptsMask |= Inputs_FIELD_0_PIN_3;
+		
+		Inputs_SetPortEventCondition(NULL, interruptsMask, LDD_GPIO_BOTH);
+	}
+}
+
+static void sendInputs()
+{
+	static uint8_t buffer[3] = { SNODE_CMD_INPUTS };
+	uint8_t length = 2;
+	
+	buffer[1] = SNodeChange::NoChanges;
+	
+	if (InputPinsChanged)
+	{
+		buffer[1] |= SNodeChange::InputValues;
+		buffer[length++] = Inputs_GetFieldValue(NULL, Input);
+		InputPinsChanged = false;
+	}
+	
+	if (buffer[1])
+	{
+		LED_ON(LED1);
+		RF24NetworkHeader header = RF24NetworkHeader(0); //TODO: keep root address as a setting?
+		bool ok = network.write(header, buffer, length);
+		led1OffTime = getTime() + (ok ? 100 : 0);
+	}
+}
+
 void sNodeMain(void)
 {		
 	if (FLASH_Read(FLASH_DeviceData, FLASH_USER_AREA0_Settings_ADDRESS, &settings, sizeof(UserSettings)) == ERR_OK)
@@ -199,6 +273,8 @@ void sNodeMain(void)
 		settings.Channel = 90;
 		settings.NodeType = NodeConfigType::RedirectPacketsToSerialPort;
 	}
+	
+	configureNodeFromSettings();
 	
 	AES_generateSBox(); //init sandbox for AES encryption
 	network.enableEncryption(settings.AesKey, settings.AesIV, AES_MODE_128); //enable encryption for network
@@ -217,6 +293,8 @@ void sNodeMain(void)
 			Cpu_SetOperationMode(DOM_SLEEP, NULL, NULL);
 			radio.powerUp();
 		}
+		
+		sendInputs();
 		
 		network.update();
 	
