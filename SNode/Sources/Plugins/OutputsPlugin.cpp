@@ -85,19 +85,22 @@ void OutputsPlugin::Init()
 	));                               
 }
 
-void OutputsPlugin::OnNetworkPacketReceived(RF24NetworkHeader &header, const uint8_t *data, uint8_t length)
+bool OutputsPlugin::OnNetworkPacketReceived(RF24NetworkHeader &header, const uint8_t *data, uint8_t length)
 {
-	LED_TOGGLE(LED1);
+	if (Plugin::OnNetworkPacketReceived(header, data, length))
+		return true;
+	
 	switch (data[0])
 	{
 	case SNODE_CMD_OUTPUT:
-		LED_TOGGLE(LED2);
-		
 		if (data[1] & 0x01) P0->PSOR = O0; else P0->PCOR = O0;
 		if (data[1] & 0x02) P1->PSOR = O1; else P1->PCOR = O1;
 		if (data[1] & 0x04) P2->PSOR = O2; else P2->PCOR = O2;
 		if (data[1] & 0x08) P3->PSOR = O3; else P3->PCOR = O3;
-		
 		break;
+	default:
+		return false;
 	}
+	
+	return true;
 }

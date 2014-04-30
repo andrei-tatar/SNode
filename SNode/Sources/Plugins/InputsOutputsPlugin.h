@@ -17,7 +17,7 @@ public:
 	InputsOutputsPlugin(RF24Network &network);
 	
 	virtual void Init();
-	virtual void OnNetworkPacketReceived(RF24NetworkHeader &header, const uint8_t *data, uint8_t length);
+	virtual bool OnNetworkPacketReceived(RF24NetworkHeader &header, const uint8_t *data, uint8_t length);
 	virtual void Loop();
 };
 

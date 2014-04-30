@@ -14,7 +14,7 @@ PE_ISR(interruptInputPluginPORTA)
 volatile bool InputPlugin::InputsChanged = false;
 
 InputPlugin::InputPlugin(RF24Network &network)
-:Plugin(network)
+	:Plugin(network)
 {
 	interruptChange(InterruptPORTA, &interruptInputPluginPORTA);
 }
@@ -95,11 +95,14 @@ void InputPlugin::Init()
 
 void InputPlugin::Loop()
 {
+	Plugin::Loop();
+	
 	if (!InputsChanged) return;
 	InputsChanged = false;
 	
 	RF24NetworkHeader header = RF24NetworkHeader(0, 0);
 	uint8_t inputValues = (PTA_BASE_PTR->PDIR & 0x1E) >> 1;
 	uint8_t data[2] = { SNODE_CMD_INPUTS , inputValues };
-	network.write(header, data, sizeof(data));
+	bool ok = network.write(header, data, sizeof(data));
+	TurnLed(LED1, ok ? 50 : 300);
 }

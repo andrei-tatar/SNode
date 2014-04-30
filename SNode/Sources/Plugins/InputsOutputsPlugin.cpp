@@ -8,7 +8,9 @@
 #include "InputsOutputsPlugin.h"
 
 InputsOutputsPlugin::InputsOutputsPlugin(RF24Network &network)
-:Plugin(network), InputPlugin(network), OutputsPlugin(network)
+	:Plugin(network), 
+	 InputPlugin(network), 
+	 OutputsPlugin(network)
 {
 }
 
@@ -18,9 +20,9 @@ void InputsOutputsPlugin::Init()
 	OutputsPlugin::Init();
 }
 	
-void InputsOutputsPlugin::OnNetworkPacketReceived(RF24NetworkHeader &header, const uint8_t *data, uint8_t length)
+bool InputsOutputsPlugin::OnNetworkPacketReceived(RF24NetworkHeader &header, const uint8_t *data, uint8_t length)
 {
-	OutputsPlugin::OnNetworkPacketReceived(header, data, length);
+	return OutputsPlugin::OnNetworkPacketReceived(header, data, length);
 }
 
 void InputsOutputsPlugin::Loop()

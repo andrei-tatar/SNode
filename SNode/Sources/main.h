@@ -39,7 +39,9 @@ typedef struct
 } UserSettings;
 
 void sNodeMain(void);
+void WaitFlashOperation();
 
+extern UserSettings userSettings;
 extern bool FlashOperationComplete;
 
 #endif /* MAIN_H_ */

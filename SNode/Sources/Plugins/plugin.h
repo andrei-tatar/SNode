@@ -27,17 +27,23 @@ enum InterruptType {
 
 class Plugin
 {
+private:
+	uint32_t led1OffTime;
+	uint32_t led2OffTime;
+		
 protected:
 	RF24Network &network;
 	Plugin(RF24Network &network);
+	
+	void TurnLed(uint32_t led, uint16_t delay);
 	
 public:
 	static Plugin& Load(RF24Network &network, NodeType type);
 	
 	virtual void Init() = 0;
 	
-	virtual void OnNetworkPacketReceived(RF24NetworkHeader &header, const uint8_t *data, uint8_t length);
-	virtual void OnSerialPacketReceived(uint8_t cmd, const uint8_t *data, uint8_t length);
+	virtual bool OnNetworkPacketReceived(RF24NetworkHeader &header, const uint8_t *data, uint8_t length);
+	virtual bool OnSerialPacketReceived(uint8_t cmd, const uint8_t *data, uint8_t length);
 	virtual void Loop();
 };
 

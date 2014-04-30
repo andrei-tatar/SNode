@@ -16,23 +16,14 @@
  * the rest of the bytes are the actual data in the packet that was received */
 #define NT_PACKETRECEIVED	0x32
 
-
-
-
 #include "plugin.h"
 
 class MainRouterPlugin: public Plugin {
-protected:
-	uint32_t led1OffTime;
-	uint32_t led2OffTime;
-	
-	
 public:
 	MainRouterPlugin(RF24Network &network);
 	virtual void Init();
-	virtual void OnNetworkPacketReceived(RF24NetworkHeader &header, const uint8_t *data, uint8_t length);
-	virtual void OnSerialPacketReceived(uint8_t cmd, const uint8_t *data, uint8_t length);
-	virtual void Loop();
+	virtual bool OnNetworkPacketReceived(RF24NetworkHeader &header, const uint8_t *data, uint8_t length);
+	virtual bool OnSerialPacketReceived(uint8_t cmd, const uint8_t *data, uint8_t length);
 };
 
 #endif /* MAINROUTERPLUGIN_H_ */
