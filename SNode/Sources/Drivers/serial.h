@@ -17,7 +17,7 @@
 void flushTx();
 
 extern void packetReceived(uint8_t cmd, const uint8_t *data, int length);
-void serialSendPacket(uint8_t cmd, const uint8_t *data, int length);
+void serialSendPacket(uint8_t cmd, const void *data, int length);
 
 void debugString(const char *str);
 

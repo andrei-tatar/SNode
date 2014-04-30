@@ -1,16 +1,5 @@
-/*
- * Commands.h
- *
- *  Created on: Feb 22, 2014
- *      Author: X550L-User1
- */
-
 #ifndef COMMANDS_H_
 #define COMMANDS_H_
-
-/* Instructs a node to send a packet. The first 2 bytes are the destination address (1:LSB, 2:MSB), 
- * the rest of the bytes are the actual data in the packet that will be sent */
-#define CMD_SENDPACKET 		0x31
 
 /* Echo command expects a reply with the same command and same data it received */
 #define CMD_PING_ECHO		0xDE
@@ -34,10 +23,6 @@
 /* Requests the unique ID of the node */
 #define CMD_GETID			0x7E
 
-/* Sent when a packet is received. The firs 2 bytes are the destination address (1:LSB, 2:MSB),
- * the rest of the bytes are the actual data in the packet that was received */
-#define NT_PACKETRECEIVED	0x32
-
 /* Notifies the node has booted and inited */
 #define NT_BOOTED			0x2F
 
@@ -50,9 +35,6 @@
 /* Sent as a repy to CMD_PING_ECHO */
 #define NT_PING_ECHO		CMD_PING_ECHO
 
-
-#define SNODE_CMD_INPUTS	0x1D
-#define SNODE_CMD_OUTPUT	0x4A
 #define SNODE_CMD_ECHO		0xE0
 #define SNODE_CMD_ECHO_R	0xE1
 

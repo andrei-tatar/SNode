@@ -40,24 +40,6 @@ extern "C" {
 
 /*
 ** ===================================================================
-**     Event       :  Cpu_OnNMIINT (module Events)
-**
-**     Component   :  Cpu [MKL15Z128LK4]
-*/
-/*!
-**     @brief
-**         This event is called when the Non maskable interrupt had
-**         occurred. This event is automatically enabled when the [NMI
-**         interrupt] property is set to 'Enabled'.
-*/
-/* ===================================================================*/
-void Cpu_OnNMIINT(void)
-{
-  /* Write your code here ... */
-}
-
-/*
-** ===================================================================
 **     Event       :  FLASH_OnOperationComplete (module Events)
 **
 **     Component   :  FLASH [FLASH_LDD]
@@ -76,29 +58,6 @@ void Cpu_OnNMIINT(void)
 void FLASH_OnOperationComplete(LDD_TUserData *UserDataPtr)
 {
 	FlashOperationComplete = true;
-}
-
-/*
-** ===================================================================
-**     Event       :  Inputs_OnPortEvent (module Events)
-**
-**     Component   :  Inputs [GPIO_LDD]
-*/
-/*!
-**     @brief
-**         Called if defined event on any pin of the port occured.
-**         OnPortEvent event and GPIO interrupt must be enabled. See
-**         SetEventMask() and GetEventMask() methods. This event is
-**         enabled if [Interrupt service/event] is Enabled and disabled
-**         if [Interrupt service/event] is Disabled.
-**     @param
-**         UserDataPtr     - Pointer to RTOS device
-**                           data structure pointer.
-*/
-/* ===================================================================*/
-void Inputs_OnPortEvent(LDD_TUserData *UserDataPtr)
-{
-	InputPinsChanged = true;
 }
 
 /* END Events */
