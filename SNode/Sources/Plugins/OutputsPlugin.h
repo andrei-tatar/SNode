@@ -9,7 +9,7 @@ class OutputsPlugin : virtual public Plugin {
 public:
 	OutputsPlugin(RF24Network &network);
 	virtual void Init();
-	virtual bool OnNetworkPacketReceived(RF24NetworkHeader &header, const uint8_t *data, uint8_t length);	
+	virtual bool OnNetworkPacketReceived(RF24NetworkHeader &header, uint8_t *data, uint8_t length);	
 };
 
 #endif /* OUTPUTSPLUGIN_H_ */

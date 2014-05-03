@@ -143,7 +143,7 @@ void debugString(const char *str)
 	serialData((const uint8_t*)str, strlen(str));
 }
 
-void flushTx()
+void serialFlushTx()
 {
 	while (txCount) ;
 }

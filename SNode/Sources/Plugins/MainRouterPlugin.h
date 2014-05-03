@@ -22,8 +22,8 @@ class MainRouterPlugin: public Plugin {
 public:
 	MainRouterPlugin(RF24Network &network);
 	virtual void Init();
-	virtual bool OnNetworkPacketReceived(RF24NetworkHeader &header, const uint8_t *data, uint8_t length);
-	virtual bool OnSerialPacketReceived(uint8_t cmd, const uint8_t *data, uint8_t length);
+	virtual bool OnNetworkPacketReceived(RF24NetworkHeader &header, uint8_t *data, uint8_t length);
+	virtual bool OnSerialPacketReceived(uint8_t cmd, uint8_t *data, uint8_t length);
 };
 
 #endif /* MAINROUTERPLUGIN_H_ */

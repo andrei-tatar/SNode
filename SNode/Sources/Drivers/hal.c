@@ -31,6 +31,16 @@ void delay_ms(uint16_t msec)
 
 #define _NOP() asm volatile("nop")
 
+void timerDisable()
+{
+	SYST_CSR = 0;
+}
+
+void timerEnable()
+{
+	SYST_CSR = SysTick_CSR_CLKSOURCE_MASK | SysTick_CSR_TICKINT_MASK | SysTick_CSR_ENABLE_MASK;
+}
+
 void delay_us(uint32_t usec)
 {
 	while (usec--)

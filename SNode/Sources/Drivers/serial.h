@@ -14,7 +14,7 @@
 
 #define MAX_RX_SIZE	64
 
-void flushTx();
+void serialFlushTx();
 
 extern void packetReceived(uint8_t cmd, const uint8_t *data, int length);
 void serialSendPacket(uint8_t cmd, const void *data, int length);

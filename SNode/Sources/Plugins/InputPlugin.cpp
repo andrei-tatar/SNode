@@ -11,11 +11,15 @@ PE_ISR(interruptInputPluginPORTA)
 	LED_TOGGLE(LED1);
 }
 
-volatile bool InputPlugin::InputsChanged = false;
+volatile bool InputPlugin::InputsChanged = true;
 
 InputPlugin::InputPlugin(RF24Network &network)
 	:Plugin(network)
 {
+	_led2ToggleTime = 0;
+	_lastReceivedPacket = 0;
+	
+	_prevInputs = 0xFF;
 	interruptChange(InterruptPORTA, &interruptInputPluginPORTA);
 }
 
@@ -59,6 +63,7 @@ void InputPlugin::Init()
 	PORTA_PCR1 = (uint32_t)((PORTA_PCR1 & (uint32_t)~(uint32_t)(
 			PORT_PCR_IRQC(0x04)
 	)) | (uint32_t)(
+			PORT_PCR_PE_MASK |
 			PORT_PCR_ISF_MASK |
 			PORT_PCR_IRQC(0x0B)
 	));                                  
@@ -66,6 +71,7 @@ void InputPlugin::Init()
 	PORTA_PCR2 = (uint32_t)((PORTA_PCR2 & (uint32_t)~(uint32_t)(
 			PORT_PCR_IRQC(0x04)
 	)) | (uint32_t)(
+			PORT_PCR_PE_MASK |
 			PORT_PCR_ISF_MASK |
 			PORT_PCR_IRQC(0x0B)
 	));                                  
@@ -73,6 +79,7 @@ void InputPlugin::Init()
 	PORTA_PCR3 = (uint32_t)((PORTA_PCR3 & (uint32_t)~(uint32_t)(
 			PORT_PCR_IRQC(0x04)
 	)) | (uint32_t)(
+			PORT_PCR_PE_MASK |
 			PORT_PCR_ISF_MASK |
 			PORT_PCR_IRQC(0x0B)
 	));                                  
@@ -80,6 +87,7 @@ void InputPlugin::Init()
 	PORTA_PCR4 = (uint32_t)((PORTA_PCR4 & (uint32_t)~(uint32_t)(
 			PORT_PCR_IRQC(0x04)
 	)) | (uint32_t)(
+			PORT_PCR_PE_MASK |
 			PORT_PCR_ISF_MASK |
 			PORT_PCR_IRQC(0x0B)
 	));                                  
@@ -93,16 +101,41 @@ void InputPlugin::Init()
 	NVIC_ISER |= NVIC_ISER_SETENA(0x40000000);
 }
 
-void InputPlugin::Loop()
+bool InputPlugin::OnSerialPacketReceived(uint8_t cmd, uint8_t *data, uint8_t length)
 {
-	Plugin::Loop();
+	_lastReceivedPacket = getTime();
+	return Plugin::OnSerialPacketReceived(cmd, data, length);
+}
+
+bool InputPlugin::Loop()
+{
+	uint32_t now = getTime();
+	bool shouldSleep = (now - _lastReceivedPacket) > 5000;
+	bool r = Plugin::Loop();
 	
-	if (!InputsChanged) return;
+	if (!shouldSleep)
+	{
+		if (now > _led2ToggleTime)
+		{
+			LED_TOGGLE(LED2);
+			_led2ToggleTime = now + 50;
+		}
+	}
+	else
+		LED_OFF(LED2);
+	
+	
+	if (!InputsChanged) return r && shouldSleep;
 	InputsChanged = false;
 	
-	RF24NetworkHeader header = RF24NetworkHeader(0, 0);
 	uint8_t inputValues = (PTA_BASE_PTR->PDIR & 0x1E) >> 1;
+	if (_prevInputs == inputValues)
+		return r && shouldSleep;
+	
+	_prevInputs = inputValues;
+	RF24NetworkHeader header = RF24NetworkHeader(0, 0);
 	uint8_t data[2] = { SNODE_CMD_INPUTS , inputValues };
 	bool ok = network.write(header, data, sizeof(data));
 	TurnLed(LED1, ok ? 50 : 300);
+	return false;
 }

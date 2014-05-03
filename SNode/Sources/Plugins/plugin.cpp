@@ -50,11 +50,13 @@ Plugin::Plugin(RF24Network &network)
 	:network(network)
 {
 	serialSendPacket(NT_BOOTED, NULL, 0);
+	led1OffTime = 0;
+	led2OffTime = 0;
 }
 
 Plugin& Plugin::Load(RF24Network &network, NodeType type)
 {	
-	switch (type & 0xFFFF)
+	switch (type)
 	{
 	case MainRouter:
 		return * new MainRouterPlugin(network);
@@ -64,9 +66,12 @@ Plugin& Plugin::Load(RF24Network &network, NodeType type)
 		return * new InputPlugin(network);
 	case InputsOutputs:
 		return * new InputsOutputsPlugin(network);
+	default:
+		while(1){
+			LED_TOGGLE(LED1);
+			delay_ms(500);
+		}
 	}
-	
-	while (1);
 }
 
 void Plugin::TurnLed(uint32_t led, uint16_t delay)
@@ -84,29 +89,22 @@ void Plugin::TurnLed(uint32_t led, uint16_t delay)
 	}
 }
 
-bool Plugin::OnNetworkPacketReceived(RF24NetworkHeader &header, const uint8_t *data, uint8_t length)
+bool Plugin::OnNetworkPacketReceived(RF24NetworkHeader &header, uint8_t *data, uint8_t length)
 {
 	TurnLed(LED2, 50);
-	
-	uint8_t txdata[24];
-	
-	switch (data[0])
+
+	if (data[0] == SNODE_CMD_ECHO)
 	{
-	case SNODE_CMD_ECHO:
-		memcpy(txdata, data, sizeof(txdata));
 		header.to_node = header.from_node;
-		txdata[0] = SNODE_CMD_ECHO_R;
-		network.write(header, txdata, length);
-		break;
-		
-	default:
-		return false;
+		data[0] = SNODE_CMD_ECHO_R;
+		network.write(header, data, length);
+		return true;
 	}
 	
-	return true;
+	return false;
 }
 
-bool Plugin::OnSerialPacketReceived(uint8_t cmd, const uint8_t *data, uint8_t length)
+bool Plugin::OnSerialPacketReceived(uint8_t cmd, uint8_t *data, uint8_t length)
 {
 	RF24NetworkHeader header;
 	uint8_t *buf;
@@ -167,7 +165,7 @@ bool Plugin::OnSerialPacketReceived(uint8_t cmd, const uint8_t *data, uint8_t le
 		*buf++ = (userSettings.HashCode >> (8 * 2)) & 0xFF;
 		*buf   = (userSettings.HashCode >> (8 * 3)) & 0xFF;
 		
-		serialSendPacket(NT_SETTINGS_H, data, 4);
+		serialSendPacket(NT_SETTINGS_H, auxdata, 4);
 		break;
 		
 	case CMD_GETID:
@@ -179,7 +177,7 @@ bool Plugin::OnSerialPacketReceived(uint8_t cmd, const uint8_t *data, uint8_t le
 		*buf++ = (SIM_UIDML >> (8 * 2)) & 0xFF; *buf++ = (SIM_UIDML >> (8 * 3)) & 0xFF;
 		*buf++ = (SIM_UIDMH >> (8 * 0)) & 0xFF; *buf   = (SIM_UIDMH >> (8 * 1)) & 0xFF;
 		
-		serialSendPacket(NT_NODEID, data, 10);
+		serialSendPacket(NT_NODEID, auxdata, 10);
 		break;
 		
 	case CMD_RESET:
@@ -193,9 +191,38 @@ bool Plugin::OnSerialPacketReceived(uint8_t cmd, const uint8_t *data, uint8_t le
 	return true;
 }
 
-void Plugin::Loop()
+bool Plugin::Loop()
 {
 	uint32_t now = getTime();
-	if (now > led1OffTime) LED_OFF(LED1);
-	if (now > led2OffTime) LED_OFF(LED2);
+	
+	bool shouldSleep = true;
+	
+	if (led1OffTime) 
+	{
+		if (now > led1OffTime) 
+		{ 
+			LED_OFF(LED1); 
+			led1OffTime = 0;  
+		} 
+		else 
+		{
+			shouldSleep = false;
+		}
+	}
+	
+	if (led2OffTime)
+	{
+		if (now > led2OffTime) 
+		{ 
+			LED_OFF(LED2); 
+			led2OffTime = 0; 
+			shouldSleep &= true; 
+		} 
+		else
+		{
+			shouldSleep = false;
+		}
+	}
+	
+	return shouldSleep;
 }

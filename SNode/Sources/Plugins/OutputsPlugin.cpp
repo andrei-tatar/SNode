@@ -85,7 +85,7 @@ void OutputsPlugin::Init()
 	));                               
 }
 
-bool OutputsPlugin::OnNetworkPacketReceived(RF24NetworkHeader &header, const uint8_t *data, uint8_t length)
+bool OutputsPlugin::OnNetworkPacketReceived(RF24NetworkHeader &header, uint8_t *data, uint8_t length)
 {
 	if (Plugin::OnNetworkPacketReceived(header, data, length))
 		return true;

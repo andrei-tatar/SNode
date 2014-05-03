@@ -19,7 +19,7 @@ void MainRouterPlugin::Init()
 {
 }
 
-bool MainRouterPlugin::OnNetworkPacketReceived(RF24NetworkHeader &header, const uint8_t *data, uint8_t length)
+bool MainRouterPlugin::OnNetworkPacketReceived(RF24NetworkHeader &header, uint8_t *data, uint8_t length)
 {
 	if (Plugin::OnNetworkPacketReceived(header, data, length))
 		return true;
@@ -32,7 +32,7 @@ bool MainRouterPlugin::OnNetworkPacketReceived(RF24NetworkHeader &header, const 
 	return true;
 }
 
-bool MainRouterPlugin::OnSerialPacketReceived(uint8_t cmd, const uint8_t *data, uint8_t length)
+bool MainRouterPlugin::OnSerialPacketReceived(uint8_t cmd, uint8_t *data, uint8_t length)
 {
 	if (Plugin::OnSerialPacketReceived(cmd, data, length))
 		return true;

@@ -42,9 +42,9 @@ public:
 	
 	virtual void Init() = 0;
 	
-	virtual bool OnNetworkPacketReceived(RF24NetworkHeader &header, const uint8_t *data, uint8_t length);
-	virtual bool OnSerialPacketReceived(uint8_t cmd, const uint8_t *data, uint8_t length);
-	virtual void Loop();
+	virtual bool OnNetworkPacketReceived(RF24NetworkHeader &header, uint8_t *data, uint8_t length);
+	virtual bool OnSerialPacketReceived(uint8_t cmd, uint8_t *data, uint8_t length);
+	virtual bool Loop();
 };
 
 #endif /* PLUGINS_H_ */

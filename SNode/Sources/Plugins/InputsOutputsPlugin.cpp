@@ -20,13 +20,13 @@ void InputsOutputsPlugin::Init()
 	OutputsPlugin::Init();
 }
 	
-bool InputsOutputsPlugin::OnNetworkPacketReceived(RF24NetworkHeader &header, const uint8_t *data, uint8_t length)
+bool InputsOutputsPlugin::OnNetworkPacketReceived(RF24NetworkHeader &header, uint8_t *data, uint8_t length)
 {
 	return OutputsPlugin::OnNetworkPacketReceived(header, data, length);
 }
 
-void InputsOutputsPlugin::Loop()
+bool InputsOutputsPlugin::Loop()
 {
-	InputPlugin::Loop();
+	return InputPlugin::Loop();
 }
 

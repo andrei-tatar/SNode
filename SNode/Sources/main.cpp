@@ -75,10 +75,10 @@ void sNodeMain(void)
 	//some debug sequence
 	LED_ON(LED1);
 	LED_OFF(LED2);
-	delay_ms(500);
+	delay_ms(50);
 	LED_OFF(LED1);
 	LED_ON(LED2);
-	delay_ms(500);
+	delay_ms(50);
 	LED_OFF(LED2);
 	
 	if (FLASH_Read(FLASH_DeviceData, FLASH_USER_AREA0_Settings_ADDRESS, &userSettings, sizeof(UserSettings)) == ERR_OK)
@@ -91,8 +91,26 @@ void sNodeMain(void)
 		//set some default settings
 		userSettings.Address = 0;
 		userSettings.Channel = 90;
-		userSettings.NodeType = InputsOutputs;
-		//settings.NodeType = MainRouter;
+		userSettings.NodeType = MainRouter;
+		
+		const uint8_t defaultAesKey[] =
+		{
+			0x72, 0x94, 0x9D, 0x44, 
+			0xD0, 0xC0, 0x22, 0x4C, 
+			0xF7, 0x2A, 0x78, 0xE7, 
+			0x53, 0xFA, 0x1D, 0x68 
+		};
+		
+		const uint8_t defaultAesIv[] =
+		{
+			0x33, 0x38, 0x36, 0xE8,
+			0x59, 0xCD, 0x2E, 0x26, 
+			0x4C, 0x1F, 0x9E, 0xAC, 
+			0x5E, 0xB9, 0x3A, 0x3D
+		};
+		
+		memcpy(userSettings.AesKey, defaultAesKey, sizeof(defaultAesKey));
+		memcpy(userSettings.AesIV, defaultAesIv, sizeof(defaultAesIv));
 	}
 	
 	AES_generateSBox(); //init sandbox for AES encryption
@@ -106,17 +124,21 @@ void sNodeMain(void)
 	
 	while (true)
 	{
-		if (userSettings.NodeType & EnableSleepMode)
-		{
-			radio.powerDown();
-			//the other parameters are not used
-			Cpu_SetOperationMode(DOM_SLEEP, NULL, NULL);
-			radio.powerUp();
-		}
-		
 		network.update();	
 		ProcessSerialPackets(plugin);
 		ProcessNetworkPackets(plugin);
-		plugin.Loop();
+		bool canSleep = plugin.Loop();
+		
+		if (canSleep && (userSettings.NodeType & EnableSleepMode))
+		{
+			serialFlushTx();
+			radio.powerDown();
+			timerDisable();
+			
+			Cpu_SetOperationMode(DOM_SLEEP, NULL, NULL);
+			
+			timerEnable();
+			radio.powerUp();
+		}
 	}
 }
