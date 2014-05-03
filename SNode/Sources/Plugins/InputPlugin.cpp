@@ -2,6 +2,8 @@
 #include "InputPlugin.h"
 #include "hal.h"
 
+#define ENTER_SLEEP_DELAY	5000
+
 PE_ISR(interruptInputPluginPORTA)
 {
 	uint32_t state = PORTA_BASE_PTR->ISFR & 0b11110;
@@ -17,7 +19,7 @@ InputPlugin::InputPlugin(RF24Network &network)
 	:Plugin(network)
 {
 	_led2ToggleTime = 0;
-	_lastReceivedPacket = 0;
+	_enterSleepTime = ENTER_SLEEP_DELAY;
 	
 	_prevInputs = 0xFF;
 	interruptChange(InterruptPORTA, &interruptInputPluginPORTA);
@@ -103,34 +105,31 @@ void InputPlugin::Init()
 
 bool InputPlugin::OnSerialPacketReceived(uint8_t cmd, uint8_t *data, uint8_t length)
 {
-	_lastReceivedPacket = getTime();
+	_enterSleepTime = getTime() + ENTER_SLEEP_DELAY;
 	return Plugin::OnSerialPacketReceived(cmd, data, length);
 }
 
 bool InputPlugin::Loop()
 {
 	uint32_t now = getTime();
-	bool shouldSleep = (now - _lastReceivedPacket) > 5000;
-	bool r = Plugin::Loop();
+	bool shouldSleep = now > _enterSleepTime;
+	bool baseShouldSleep = Plugin::Loop();
 	
 	if (!shouldSleep)
-	{
 		if (now > _led2ToggleTime)
 		{
-			LED_TOGGLE(LED2);
-			_led2ToggleTime = now + 50;
+			TurnLed(LED2, 100);
+			_led2ToggleTime = now + 200;
 		}
-	}
-	else
-		LED_OFF(LED2);
 	
+	shouldSleep &= baseShouldSleep;
 	
-	if (!InputsChanged) return r && shouldSleep;
+	if (!InputsChanged) return shouldSleep;
 	InputsChanged = false;
 	
 	uint8_t inputValues = (PTA_BASE_PTR->PDIR & 0x1E) >> 1;
 	if (_prevInputs == inputValues)
-		return r && shouldSleep;
+		return shouldSleep;
 	
 	_prevInputs = inputValues;
 	RF24NetworkHeader header = RF24NetworkHeader(0, 0);

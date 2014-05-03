@@ -8,8 +8,10 @@
 class InputPlugin: virtual public Plugin {
 private:
 	uint8_t _prevInputs;
-	uint32_t _lastReceivedPacket;
 	uint32_t _led2ToggleTime;
+
+protected:
+	uint32_t _enterSleepTime;
 	
 public:
 	volatile static bool InputsChanged;
