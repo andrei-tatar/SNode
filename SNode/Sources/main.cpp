@@ -70,7 +70,7 @@ static void ProcessSerialPackets(Plugin &plugin)
 
 void sNodeMain(void)
 {
-	interruptInit();
+	//interruptInit();
 	
 	//some debug sequence
 	LED_ON(LED1);
@@ -122,6 +122,8 @@ void sNodeMain(void)
 	Plugin &plugin = Plugin::Load(network, (NodeType)userSettings.NodeType);
 	plugin.Init();
 	
+	bool sleepEnabled = (userSettings.NodeType & EnableSleepMode) != 0;
+	
 	while (true)
 	{
 		network.update();	
@@ -129,15 +131,13 @@ void sNodeMain(void)
 		ProcessNetworkPackets(plugin);
 		bool canSleep = plugin.Loop();
 		
-		if (canSleep && (userSettings.NodeType & EnableSleepMode))
+		if (canSleep && sleepEnabled)
 		{
 			serialFlushTx();
 			radio.powerDown();
-			timerDisable();
 			
-			Cpu_SetOperationMode(DOM_SLEEP, NULL, NULL);
+			Cpu_SetOperationMode(DOM_STOP, NULL, NULL);
 			
-			timerEnable();
 			radio.powerUp();
 		}
 	}

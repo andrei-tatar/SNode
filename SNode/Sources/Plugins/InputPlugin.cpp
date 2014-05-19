@@ -4,17 +4,6 @@
 
 #define ENTER_SLEEP_DELAY	5000
 
-PE_ISR(interruptInputPluginPORTA)
-{
-	uint32_t state = PORTA_BASE_PTR->ISFR & 0b11110;
-	PORTA_BASE_PTR->ISFR = state;
-	
-	InputPlugin::InputsChanged = true;
-	LED_TOGGLE(LED1);
-}
-
-volatile bool InputPlugin::InputsChanged = true;
-
 InputPlugin::InputPlugin(RF24Network &network)
 	:Plugin(network)
 {
@@ -22,85 +11,54 @@ InputPlugin::InputPlugin(RF24Network &network)
 	_enterSleepTime = ENTER_SLEEP_DELAY;
 	
 	_prevInputs = 0xFF;
-	interruptChange(InterruptPORTA, &interruptInputPluginPORTA);
 }
 
 void InputPlugin::Init()
 {
-	//enable clock to PORTD and PORTE
+	//enable clock to PORTA
 	SIM_SCGC5 |= SIM_SCGC5_PORTA_MASK;
 
-	/* GPIOA_PDDR: PDD&=~0x1E */
-	GPIOA_PDDR &= (uint32_t)~(uint32_t)(GPIO_PDDR_PDD(0x1E));                                   
+	//set as inputs
+	GPIOA_PDDR &= (uint32_t)~(uint32_t)(GPIO_PDDR_PDD(0x1E));
+	
 	/* Initialization of Port Control registers */
-	/* PORTA_PCR1: ISF=0,MUX=1 */
+	//disable interrupt, set as GPIO with pull enable
+	
+	//PA1
 	PORTA_PCR1 = (uint32_t)((PORTA_PCR1 & (uint32_t)~(uint32_t)(
 			PORT_PCR_ISF_MASK |
 			PORT_PCR_MUX(0x06)
 	)) | (uint32_t)(
-			PORT_PCR_MUX(0x01)
-	));                                  
-	/* PORTA_PCR2: ISF=0,MUX=1 */
+			PORT_PCR_MUX(0x01) | 
+			PORT_PCR_PE_MASK
+	));
+	
+	//PA2
 	PORTA_PCR2 = (uint32_t)((PORTA_PCR2 & (uint32_t)~(uint32_t)(
 			PORT_PCR_ISF_MASK |
 			PORT_PCR_MUX(0x06)
 	)) | (uint32_t)(
-			PORT_PCR_MUX(0x01)
+			PORT_PCR_MUX(0x01) | 
+			PORT_PCR_PE_MASK
 	));                                  
-	/* PORTA_PCR3: ISF=0,MUX=1 */
+
+	//PA3
 	PORTA_PCR3 = (uint32_t)((PORTA_PCR3 & (uint32_t)~(uint32_t)(
 			PORT_PCR_ISF_MASK |
 			PORT_PCR_MUX(0x06)
 	)) | (uint32_t)(
-			PORT_PCR_MUX(0x01)
+			PORT_PCR_MUX(0x01) | 
+			PORT_PCR_PE_MASK
 	));                                  
-	/* PORTA_PCR4: ISF=0,MUX=1 */
+
+	//PA4
 	PORTA_PCR4 = (uint32_t)((PORTA_PCR4 & (uint32_t)~(uint32_t)(
 			PORT_PCR_ISF_MASK |
 			PORT_PCR_MUX(0x06)
 	)) | (uint32_t)(
-			PORT_PCR_MUX(0x01)
-	));                                  
-	/* PORTA_PCR1: ISF=1,IRQC=0x0B */
-	PORTA_PCR1 = (uint32_t)((PORTA_PCR1 & (uint32_t)~(uint32_t)(
-			PORT_PCR_IRQC(0x04)
-	)) | (uint32_t)(
-			PORT_PCR_PE_MASK |
-			PORT_PCR_ISF_MASK |
-			PORT_PCR_IRQC(0x0B)
-	));                                  
-	/* PORTA_PCR2: ISF=1,IRQC=0x0B */
-	PORTA_PCR2 = (uint32_t)((PORTA_PCR2 & (uint32_t)~(uint32_t)(
-			PORT_PCR_IRQC(0x04)
-	)) | (uint32_t)(
-			PORT_PCR_PE_MASK |
-			PORT_PCR_ISF_MASK |
-			PORT_PCR_IRQC(0x0B)
-	));                                  
-	/* PORTA_PCR3: ISF=1,IRQC=0x0B */
-	PORTA_PCR3 = (uint32_t)((PORTA_PCR3 & (uint32_t)~(uint32_t)(
-			PORT_PCR_IRQC(0x04)
-	)) | (uint32_t)(
-			PORT_PCR_PE_MASK |
-			PORT_PCR_ISF_MASK |
-			PORT_PCR_IRQC(0x0B)
-	));                                  
-	/* PORTA_PCR4: ISF=1,IRQC=0x0B */
-	PORTA_PCR4 = (uint32_t)((PORTA_PCR4 & (uint32_t)~(uint32_t)(
-			PORT_PCR_IRQC(0x04)
-	)) | (uint32_t)(
-			PORT_PCR_PE_MASK |
-			PORT_PCR_ISF_MASK |
-			PORT_PCR_IRQC(0x0B)
-	));                                  
-	/* NVIC_IPR7: PRI_30=0x80 */
-	NVIC_IPR7 = (uint32_t)((NVIC_IPR7 & (uint32_t)~(uint32_t)(
-			NVIC_IP_PRI_30(0x7F)
-	)) | (uint32_t)(
-			NVIC_IP_PRI_30(0x80)
-	));                                  
-	/* NVIC_ISER: SETENA|=0x40000000 */
-	NVIC_ISER |= NVIC_ISER_SETENA(0x40000000);
+			PORT_PCR_MUX(0x01) | 
+			PORT_PCR_PE_MASK
+	));
 }
 
 bool InputPlugin::OnSerialPacketReceived(uint8_t cmd, uint8_t *data, uint8_t length)
@@ -123,9 +81,6 @@ bool InputPlugin::Loop()
 		}
 	
 	shouldSleep &= baseShouldSleep;
-	
-	if (!InputsChanged) return shouldSleep;
-	InputsChanged = false;
 	
 	uint8_t inputValues = (PTA_BASE_PTR->PDIR & 0x1E) >> 1;
 	if (_prevInputs == inputValues)

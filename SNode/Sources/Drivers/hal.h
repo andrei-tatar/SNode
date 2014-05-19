@@ -43,9 +43,6 @@ static inline uint32_t getTime()
 	return time;
 }
 
-void timerDisable();
-void timerEnable();
-
 enum InterruptSource {
 	InterruptI2C_0 = 24,
 	InterruptI2C_1 = 25,

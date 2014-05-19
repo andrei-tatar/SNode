@@ -14,8 +14,6 @@ protected:
 	uint32_t _enterSleepTime;
 	
 public:
-	volatile static bool InputsChanged;
-	
 	InputPlugin(RF24Network &network);
 	virtual void Init();
 	virtual bool Loop();
